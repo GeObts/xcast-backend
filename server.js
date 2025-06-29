@@ -95,7 +95,7 @@ app.post('/api/auth/verify', async (req, res) => {
   }
 });
 
-// Post to Farcaster
+// Post to Farcaster - REAL POSTING
 app.post('/api/posts/farcaster', async (req, res) => {
   try {
     const { userId, text } = req.body;
@@ -104,19 +104,30 @@ app.post('/api/posts/farcaster', async (req, res) => {
       return res.status(400).json({ error: 'Missing text' });
     }
 
-    // For demo - return success
+    // Actually post to Farcaster using Neynar
+    const response = await axios.post('https://api.neynar.com/v2/farcaster/cast', {
+      signer_uuid: '361a4d28-eb3c-4dba-8902-ba037abc0e71',
+      text: text
+    }, {
+      headers: {
+        'accept': 'application/json',
+        'api_key': process.env.NEYNAR_API_KEY,
+        'content-type': 'application/json'
+      }
+    });
+
     res.json({
       success: true,
-      message: 'Posted to Farcaster!',
-      demo: true
+      message: 'Actually posted to Farcaster!',
+      cast: response.data
     });
 
   } catch (error) {
-    console.error('Farcaster posting error:', error);
-    res.json({
-      success: true,
-      message: 'Demo mode - Posted to Farcaster!',
-      demo: true
+    console.error('Real Farcaster posting error:', error.response?.data);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to post to Farcaster',
+      details: error.response?.data || error.message
     });
   }
 });
